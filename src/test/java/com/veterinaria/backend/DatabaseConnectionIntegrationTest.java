@@ -7,14 +7,15 @@ import java.sql.Connection;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-@EnabledIfEnvironmentVariable(named = "DB_USERNAME", matches = ".+")
-@EnabledIfEnvironmentVariable(named = "DB_PASSWORD", matches = ".+")
+import com.veterinaria.backend.support.PostgreSqlContainerConfiguration;
+
 @SpringBootTest
-class DatabaseConnectionIntegrationTest {
+@ActiveProfiles("test")
+class DatabaseConnectionIntegrationTest extends PostgreSqlContainerConfiguration {
 
     @Autowired
     private DataSource dataSource;
