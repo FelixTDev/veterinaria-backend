@@ -26,5 +26,9 @@ public abstract class PostgreSqlContainerConfiguration {
         registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "false");
+        registry.add("app.security.jwt.secret", () -> "0123456789abcdef0123456789abcdef");
+        registry.add("app.security.jwt.expiration-minutes", () -> "60");
+        registry.add("app.security.jwt.recovery-expiration-minutes", () -> "10");
+        registry.add("app.auth.mail.from", () -> "test@veterinaria.local");
     }
 }
