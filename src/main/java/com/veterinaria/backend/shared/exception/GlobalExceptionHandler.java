@@ -19,6 +19,12 @@ import com.veterinaria.backend.usuario.exception.CorreoDuplicadoException;
 import com.veterinaria.backend.usuario.exception.OperacionAdministradorException;
 import com.veterinaria.backend.usuario.exception.RolInvalidoException;
 import com.veterinaria.backend.usuario.exception.UsuarioNoEncontradoException;
+import com.veterinaria.backend.cliente.exception.ClienteNoEncontradoException;
+import com.veterinaria.backend.cliente.exception.DocumentoClienteDuplicadoException;
+import com.veterinaria.backend.cliente.exception.PageSizeClienteInvalidoException;
+import com.veterinaria.backend.mascota.exception.ClienteMascotaInactivoException;
+import com.veterinaria.backend.mascota.exception.MascotaNoEncontradaException;
+import com.veterinaria.backend.mascota.exception.PageSizeMascotaInvalidoException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -102,6 +108,34 @@ public class GlobalExceptionHandler {
             UsuarioNoEncontradoException exception,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            ClienteNoEncontradoException.class,
+            MascotaNoEncontradaException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleDomainNotFound(
+            RuntimeException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            DocumentoClienteDuplicadoException.class,
+            ClienteMascotaInactivoException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleDomainConflict(
+            RuntimeException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            PageSizeClienteInvalidoException.class,
+            PageSizeMascotaInvalidoException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleDomainBadRequest(
+            RuntimeException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
     @ExceptionHandler(RolInvalidoException.class)
