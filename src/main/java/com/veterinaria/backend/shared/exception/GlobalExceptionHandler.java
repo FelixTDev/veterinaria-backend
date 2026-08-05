@@ -25,6 +25,17 @@ import com.veterinaria.backend.cliente.exception.PageSizeClienteInvalidoExceptio
 import com.veterinaria.backend.mascota.exception.ClienteMascotaInactivoException;
 import com.veterinaria.backend.mascota.exception.MascotaNoEncontradaException;
 import com.veterinaria.backend.mascota.exception.PageSizeMascotaInvalidoException;
+import com.veterinaria.backend.servicio.exception.PrecioServicioInvalidoException;
+import com.veterinaria.backend.servicio.exception.ServicioDuplicadoException;
+import com.veterinaria.backend.servicio.exception.ServicioNoEncontradoException;
+import com.veterinaria.backend.horario.exception.IndisponibilidadNoEncontradaException;
+import com.veterinaria.backend.horario.exception.IndisponibilidadSolapadaException;
+import com.veterinaria.backend.horario.exception.HorarioNoEncontradoException;
+import com.veterinaria.backend.horario.exception.HorarioSolapadoException;
+import com.veterinaria.backend.horario.exception.RangoHorarioInvalidoException;
+import com.veterinaria.backend.horario.exception.RangoIndisponibilidadInvalidoException;
+import com.veterinaria.backend.horario.exception.TrabajadorNoEncontradoException;
+import com.veterinaria.backend.horario.exception.TrabajadorNoProgramableException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -112,7 +123,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             ClienteNoEncontradoException.class,
-            MascotaNoEncontradaException.class
+            MascotaNoEncontradaException.class,
+            ServicioNoEncontradoException.class,
+            TrabajadorNoEncontradoException.class,
+            HorarioNoEncontradoException.class,
+            IndisponibilidadNoEncontradaException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainNotFound(
             RuntimeException exception, HttpServletRequest request) {
@@ -121,7 +136,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             DocumentoClienteDuplicadoException.class,
-            ClienteMascotaInactivoException.class
+            ClienteMascotaInactivoException.class,
+            ServicioDuplicadoException.class,
+            PrecioServicioInvalidoException.class,
+            TrabajadorNoProgramableException.class,
+            HorarioSolapadoException.class,
+            IndisponibilidadSolapadaException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainConflict(
             RuntimeException exception, HttpServletRequest request) {
@@ -131,6 +151,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             PageSizeClienteInvalidoException.class,
             PageSizeMascotaInvalidoException.class,
+            RangoHorarioInvalidoException.class,
+            RangoIndisponibilidadInvalidoException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainBadRequest(

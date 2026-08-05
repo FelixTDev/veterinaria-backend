@@ -1,6 +1,7 @@
 package com.veterinaria.backend.usuario.repository;
 
 import java.util.List;
+import java.util.Collection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,6 +36,8 @@ public interface UsuarioRolRepository extends JpaRepository<UsuarioRol, UsuarioR
     List<UsuarioRol> findActivosByUsuarioIds(@Param("usuarioIds") List<Long> usuarioIds);
 
     boolean existsByUsuario_IdAndRol_Nombre(Long usuarioId, NombreRol nombreRol);
+
+    boolean existsByUsuario_IdAndRol_NombreIn(Long usuarioId, Collection<NombreRol> nombres);
 
     void deleteByUsuario_Id(Long usuarioId);
 

@@ -24,6 +24,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByCorreoIgnoreCaseAndIdNot(String correo, Long id);
 
+    boolean existsByIdAndActivoTrue(Long id);
+
     @Query("""
             select usuario
             from Usuario usuario
