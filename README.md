@@ -138,6 +138,69 @@ Rutas sugeridas para Postman, carpeta `02 - Usuarios`:
 .\mvnw.cmd spring-boot:run
 ```
 
+## Gestion de clientes y mascotas
+
+Los módulos de clientes y mascotas requieren un Bearer JWT con rol `ADMINISTRADOR` o `RECEPCIONISTA`. Los roles `VETERINARIO` y `PELUQUERO` reciben 403. Las operaciones no eliminan físicamente información.
+
+### Clientes
+
+- `POST /api/v1/clientes`: registra un cliente activo.
+- `GET /api/v1/clientes`: lista con `page`, `size`, `sort`, `search`, `activo` y `tipoDocumento`.
+- `GET /api/v1/clientes/{id}`: obtiene datos y mascotas resumidas.
+- `PUT /api/v1/clientes/{id}`: edita todos los datos personales editables.
+- `PATCH /api/v1/clientes/{id}/estado`: activa o desactiva sin eliminar.
+- `GET /api/v1/clientes/{id}/mascotas`: lista mascotas del cliente con paginación, `search` y `activo`.
+
+Ejemplo de alta:
+
+```json
+{
+  "primerNombre": "Maria",
+  "segundoNombre": null,
+  "primerApellido": "Torres",
+  "segundoApellido": "Lopez",
+  "tipoDocumento": "DNI",
+  "numeroDocumento": "72845612",
+  "fechaNacimiento": "1990-05-14",
+  "telefono": "987654321",
+  "correo": "maria.torres@gmail.com"
+}
+```
+
+El documento es único por `tipoDocumento + numeroDocumento`. El correo se normaliza a minúsculas, pero no es único porque el esquema no define esa restricción.
+
+### Mascotas
+
+- `POST /api/v1/mascotas`: registra una mascota activa para un cliente activo.
+- `GET /api/v1/mascotas`: lista con `page`, `size`, `sort`, `search`, `activo`, `clienteId`, `especie` y `sexo`.
+- `GET /api/v1/mascotas/{id}`: obtiene el detalle y propietario resumido.
+- `PUT /api/v1/mascotas/{id}`: edita los datos propios; no cambia el propietario.
+- `PATCH /api/v1/mascotas/{id}/estado`: activa o desactiva sin eliminar.
+
+Ejemplo de alta:
+
+```json
+{
+  "clienteId": 25,
+  "nombre": "Luna",
+  "especie": "PERRO",
+  "raza": "Labrador",
+  "color": "Dorado",
+  "sexo": "HEMBRA",
+  "pesoKg": 24.5,
+  "fechaNacimiento": "2022-05-14",
+  "edadAproximadaAnios": 4
+}
+```
+
+La fecha de nacimiento no puede ser futura y el peso, cuando se informa, debe ser mayor que cero. `edadAproximadaAnios` es un valor persistido existente: se expone si tiene valor, no se calcula ni se sincroniza automáticamente con la fecha de nacimiento. Su semántica queda pendiente para una feature futura.
+
+No se aceptan `direccion`, `tamano`, `numeroMicrochip` ni `observaciones` porque no existen en las entidades ni en el esquema actual. No se implementa cambio de propietario.
+
+Los listados usan consultas paginadas en PostgreSQL. El conteo de mascotas por cliente se obtiene mediante una consulta agregada por lote y el propietario de cada mascota se carga con `EntityGraph`, evitando consultas dentro de ciclos y N+1.
+
+Las respuestas de validación son 400, los recursos inexistentes 404, los documentos duplicados o propietarios inactivos 409, las solicitudes sin token 401 y los roles no autorizados 403.
+
 ## Pruebas
 
 ```powershell
