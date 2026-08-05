@@ -15,12 +15,18 @@ import com.veterinaria.backend.auth.exception.PasswordPolicyException;
 import com.veterinaria.backend.auth.exception.PasswordsNoCoincidenException;
 import com.veterinaria.backend.auth.exception.RecoveryTokenInvalidoException;
 import com.veterinaria.backend.auth.exception.UsuarioInactivoException;
+import com.veterinaria.backend.usuario.exception.CorreoDuplicadoException;
+import com.veterinaria.backend.usuario.exception.OperacionAdministradorException;
+import com.veterinaria.backend.usuario.exception.RolInvalidoException;
+import com.veterinaria.backend.usuario.exception.UsuarioNoEncontradoException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -89,6 +95,40 @@ public class GlobalExceptionHandler {
             CorreoEnvioException exception,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(UsuarioNoEncontradoException.class)
+    public ResponseEntity<ApiErrorResponse> handleUsuarioNotFound(
+            UsuarioNoEncontradoException exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(RolInvalidoException.class)
+    public ResponseEntity<ApiErrorResponse> handleRolInvalido(
+            RolInvalidoException exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            CorreoDuplicadoException.class,
+            OperacionAdministradorException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleUsuarioConflict(
+            RuntimeException exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            AccessDeniedException.class,
+            AuthorizationDeniedException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+            RuntimeException exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado.", request);
     }
 
     @ExceptionHandler(Exception.class)

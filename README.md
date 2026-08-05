@@ -51,6 +51,87 @@ La autenticacion de APIs es stateless con Bearer JWT usando Spring Security OAut
 - Un access token no sirve para restablecer password.
 - Los roles se convierten a authorities `ROLE_*`.
 
+## Gestion de usuarios y trabajadores
+
+Los endpoints administrativos del modulo de usuarios requieren Bearer JWT con `ROLE_ADMINISTRADOR`.
+
+Ruta base de trabajadores:
+
+- `POST /api/v1/usuarios`: registra un trabajador activo con una o varias asignaciones en `usuario_roles`.
+- `GET /api/v1/usuarios`: lista trabajadores con paginacion y filtros `page`, `size`, `sort`, `search`, `activo` y `rol`.
+- `GET /api/v1/usuarios/{id}`: obtiene el detalle de un trabajador.
+- `PUT /api/v1/usuarios/{id}`: actualiza datos personales editables. No modifica password, roles ni estado.
+- `PATCH /api/v1/usuarios/{id}/estado`: activa o desactiva una cuenta sin eliminarla fisicamente.
+- `PUT /api/v1/usuarios/{id}/roles`: reemplaza los roles asignados.
+
+Ruta de roles disponibles:
+
+- `GET /api/v1/roles`: lista los roles activos.
+
+Ejemplo de registro:
+
+```json
+{
+  "primerNombre": "Ana",
+  "segundoNombre": null,
+  "primerApellido": "Torres",
+  "segundoApellido": "Lopez",
+  "correo": "ana.torres@veterinaria.com",
+  "telefono": "999888777",
+  "passwordInicial": "Password123*",
+  "roles": ["RECEPCIONISTA", "PELUQUERO"]
+}
+```
+
+Ejemplo de edicion de datos personales:
+
+```json
+{
+  "primerNombre": "Ana Maria",
+  "segundoNombre": null,
+  "primerApellido": "Torres",
+  "segundoApellido": "Lopez",
+  "correo": "ana.torres@veterinaria.com",
+  "telefono": "999111222"
+}
+```
+
+Ejemplo de cambio de estado:
+
+```json
+{
+  "activo": false
+}
+```
+
+Ejemplo de reemplazo de roles:
+
+```json
+{
+  "roles": ["VETERINARIO", "PELUQUERO"]
+}
+```
+
+Reglas principales:
+
+- El correo se normaliza con `trim` y minusculas, y es unico sin distinguir mayusculas.
+- La password inicial se valida con la politica existente y se guarda solo con BCrypt.
+- Los roles enviados deben existir, estar activos y no repetirse.
+- Siempre debe quedar al menos un administrador activo.
+- Un administrador no puede desactivar su propia cuenta.
+- No existe `DELETE` fisico de trabajadores.
+- Las respuestas no exponen `passwordHash`, codigos de recuperacion ni credenciales.
+
+Rutas sugeridas para Postman, carpeta `02 - Usuarios`:
+
+- `POST - Registrar trabajador`
+- `GET - Listar trabajadores`
+- `GET - Obtener trabajador`
+- `PUT - Editar trabajador`
+- `PATCH - Cambiar estado`
+- `PUT - Actualizar roles`
+- `GET - Listar roles`
+
 ## Ejecucion
 
 ```powershell
@@ -60,6 +141,7 @@ La autenticacion de APIs es stateless con Bearer JWT usando Spring Security OAut
 ## Pruebas
 
 ```powershell
+docker version
 .\mvnw.cmd clean test
 .\mvnw.cmd clean verify
 ```
