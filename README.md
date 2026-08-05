@@ -201,6 +201,27 @@ Los listados usan consultas paginadas en PostgreSQL. El conteo de mascotas por c
 
 Las respuestas de validación son 400, los recursos inexistentes 404, los documentos duplicados o propietarios inactivos 409, las solicitudes sin token 401 y los roles no autorizados 403.
 
+## Servicios, precios y programación
+
+Catálogo:
+
+- `POST /api/v1/servicios`: crea un servicio. Solo `ADMINISTRADOR`.
+- `GET /api/v1/servicios` y `GET /api/v1/servicios/{id}`: consulta paginada o detalle. `ADMINISTRADOR`, `RECEPCIONISTA`, `VETERINARIO` y `PELUQUERO`.
+- `PUT /api/v1/servicios/{id}` y `PATCH /api/v1/servicios/{id}/estado`: edición completa y estado. Solo `ADMINISTRADOR`.
+- `GET /api/v1/servicios/{id}/precios` y `PUT /api/v1/servicios/{id}/precios`: consulta para los cuatro roles y configuración solo administrativa.
+
+Programación:
+
+- `POST /api/v1/trabajadores/{trabajadorId}/horarios`: crea una jornada.
+- `GET /api/v1/trabajadores/{trabajadorId}/horarios` y `GET /api/v1/trabajadores/{trabajadorId}/horarios/{horarioId}`: consulta general para administración/recepción o únicamente propia para veterinarios/peluqueros.
+- `PUT /api/v1/trabajadores/{trabajadorId}/horarios/{horarioId}` y `PATCH /api/v1/trabajadores/{trabajadorId}/horarios/{horarioId}/disponibilidad`: gestión administrativa.
+- `POST`, `GET`, `GET/{id}` y `PUT/{id}` bajo `/api/v1/trabajadores/{trabajadorId}/indisponibilidades`: gestión administrativa y lectura general/propia con la misma regla.
+- `GET /api/v1/trabajadores/{trabajadorId}/disponibilidad?inicio=...&fin=...`: consulta disponibilidad base.
+
+Solo son trabajadores programables los usuarios activos con rol `VETERINARIO` o `PELUQUERO`. Un administrador requiere además uno de esos roles; recepción y administración sin rol programable reciben 409. Un trabajador puede tener una sola jornada por día, el descanso es opcional y debe estar dentro de la jornada. No se implementan jornadas partidas, citas en el cálculo de disponibilidad, eliminación/cancelación de indisponibilidades ni `DELETE`.
+
+Los solapamientos se consultan en PostgreSQL con intervalos semiabiertos: `[inicio, fin)`, por lo que intervalos contiguos no se solapan. Las respuestas usan DTOs y las consultas de listados cargan la relación de usuario con `EntityGraph`; los precios se cuentan por lote para evitar N+1. La duración de `Servicio` y `PrecioServicioTamano` se conserva independiente. No se agregan moneda, sede, clasificación de trabajador ni cambios al esquema.
+
 ## Pruebas
 
 ```powershell
