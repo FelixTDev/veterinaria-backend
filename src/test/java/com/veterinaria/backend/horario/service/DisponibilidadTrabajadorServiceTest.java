@@ -25,10 +25,11 @@ class DisponibilidadTrabajadorServiceTest {
 
     @Test
     void shouldReportAvailableWhenScheduleCoversIntervalWithoutBlock() {
-        LocalDateTime inicio = LocalDateTime.of(2026, 8, 10, 9, 0);
-        LocalDateTime fin = LocalDateTime.of(2026, 8, 10, 10, 0);
+        LocalDateTime inicio = LocalDateTime.now().plusDays(1)
+                .withHour(9).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fin = inicio.plusHours(1);
         when(usuarioRepository.existsByIdAndActivoTrue(8L)).thenReturn(true);
-        when(horarioRepository.existsHorarioQueCubre(8L, 1, inicio.toLocalTime(), fin.toLocalTime()))
+        when(horarioRepository.existsHorarioQueCubre(8L, inicio.getDayOfWeek().getValue(), inicio.toLocalTime(), fin.toLocalTime()))
                 .thenReturn(true);
         when(indisponibilidadRepository.existsSolapamiento(8L, inicio, fin, null)).thenReturn(false);
 

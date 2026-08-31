@@ -31,17 +31,18 @@ class IndisponibilidadTrabajadorServiceTest {
 
     @Test
     void shouldRejectOverlappingFutureUnavailability() {
+        LocalDateTime inicio = LocalDateTime.now().plusDays(1)
+                .withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fin = inicio.plusHours(2);
         Usuario usuario = new Usuario();
         usuario.setId(8L);
         usuario.setActivo(true);
         when(usuarioRepository.findById(8L)).thenReturn(Optional.of(usuario));
         when(usuarioRolRepository.existsByUsuario_IdAndRol_NombreIn(8L,
                 java.util.List.of(NombreRol.VETERINARIO, NombreRol.PELUQUERO))).thenReturn(true);
-        when(repository.existsSolapamiento(8L, LocalDateTime.of(2026, 8, 10, 10, 0),
-                LocalDateTime.of(2026, 8, 10, 12, 0), null)).thenReturn(true);
+        when(repository.existsSolapamiento(8L, inicio, fin, null)).thenReturn(true);
 
-        CrearIndisponibilidadRequest request = new CrearIndisponibilidadRequest(
-                LocalDateTime.of(2026, 8, 10, 10, 0), LocalDateTime.of(2026, 8, 10, 12, 0), "Capacitacion");
+        CrearIndisponibilidadRequest request = new CrearIndisponibilidadRequest(inicio, fin, "Capacitacion");
 
         assertThatThrownBy(() -> service.crear(8L, request))
                 .isInstanceOf(IndisponibilidadSolapadaException.class);
