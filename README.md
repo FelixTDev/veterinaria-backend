@@ -222,6 +222,58 @@ Solo son trabajadores programables los usuarios activos con rol `VETERINARIO` o 
 
 Los solapamientos se consultan en PostgreSQL con intervalos semiabiertos: `[inicio, fin)`, por lo que intervalos contiguos no se solapan. Las respuestas usan DTOs y las consultas de listados cargan la relación de usuario con `EntityGraph`; los precios se cuentan por lote para evitar N+1. La duración de `Servicio` y `PrecioServicioTamano` se conserva independiente. No se agregan moneda, sede, clasificación de trabajador ni cambios al esquema.
 
+## Gestion de citas
+
+Ruta base: `/api/v1/citas`.
+
+- `POST /api/v1/citas`: crea una cita. Solo administración y recepción.
+- `GET /api/v1/citas`: listado paginado y filtrado.
+- `GET /api/v1/citas/disponibilidad`: combina jornada/descanso/indisponibilidad con citas ocupantes.
+- `GET /api/v1/citas/{id}`: detalle con cliente, mascota, trabajador y servicios congelados.
+- `PATCH /api/v1/citas/{id}/confirmar`
+- `PATCH /api/v1/citas/{id}/reprogramar`
+- `PATCH /api/v1/citas/{id}/cancelar`
+- `PATCH /api/v1/citas/{id}/no-atendida`
+- `PATCH /api/v1/citas/{id}/atendida`
+
+La creación recibe únicamente `mascotaId`, `trabajadorId`, `fechaHoraInicio`, servicios, motivo y observaciones. El cliente se obtiene desde la mascota y `registradoPor` se obtiene exclusivamente del claim JWT `uid`. El frontend no envía tipo, fin, precio ni duración.
+
+```json
+{
+  "mascotaId": 25,
+  "trabajadorId": 8,
+  "fechaHoraInicio": "2026-09-10T10:00:00",
+  "servicios": [
+    {"servicioId": 3, "precioServicioTamanoId": 11}
+  ],
+  "motivoConsulta": "Control anual",
+  "observaciones": null
+}
+```
+
+Cada `CitaServicio` congela `precioAplicado` y `duracionAplicadaMinutos` desde el catálogo del backend. Si se indica tarifa, debe estar activa y pertenecer al servicio; sin tarifa se usan precio base y duración del servicio. Reprogramar conserva esas instantáneas históricas y calcula el nuevo fin sumando sus duraciones.
+
+Los servicios médicos solo admiten trabajadores activos con rol `VETERINARIO`; peluquería requiere `PELUQUERO`. No se mezclan ambos tipos en una cita y ninguna cita puede cruzar medianoche.
+
+Estados permitidos:
+
+- `PENDIENTE -> CONFIRMADA`, `CANCELADA` o `NO_ATENDIDA`.
+- `CONFIRMADA -> ATENDIDA`, `CANCELADA` o `NO_ATENDIDA`.
+- `ATENDIDA`, `NO_ATENDIDA` y `CANCELADA` son terminales.
+
+`ATENDIDA` y `NO_ATENDIDA` requieren que el inicio haya llegado. Cancelación y no atención requieren motivo. Una cancelación conserva la cita y sus servicios, pero libera el intervalo porque solo `PENDIENTE` y `CONFIRMADA` ocupan agenda.
+
+Permisos:
+
+- Administración y recepción crean, consultan, confirman, reprograman, cancelan y marcan no atendida.
+- Recepción no puede marcar atendida.
+- Administración y el profesional asignado compatible pueden marcar atendida.
+- Veterinarios y peluqueros solo consultan y operan citas propias compatibles. En listados y reprogramación el backend fuerza su `uid`, aunque se envíe otro `trabajadorId`.
+
+Filtros de listado: `fechaHoraInicioDesde`, `fechaHoraInicioHasta`, `estado`, `tipoCita`, `clienteId`, `mascotaId`, `trabajadorId`, `busqueda`, `page`, `size` y `sort`. Las fechas son ISO-8601. El sort acepta únicamente `id`, `fechaHoraInicio`, `fechaHoraFin`, `estado`, `tipoCita`, `createdAt` y `updatedAt`, con dirección `asc` o `desc`.
+
+La disponibilidad responde `disponibilidadBase`, `tieneCitaSolapada`, `disponible` y `motivo`. Los intervalos son semiabiertos, por lo que dos citas contiguas son válidas. Creación bloquea primero al trabajador; reprogramación bloquea cita y luego trabajador; las transiciones bloquean la cita. Este locking reduce carreras dentro de la aplicación, pero el esquema actual no tiene una restricción de exclusión PostgreSQL: ese refuerzo a nivel base de datos queda fuera del alcance actual.
+
 ## Pruebas
 
 ```powershell

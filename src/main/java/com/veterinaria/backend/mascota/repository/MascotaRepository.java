@@ -1,6 +1,7 @@
 package com.veterinaria.backend.mascota.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,10 @@ import com.veterinaria.backend.mascota.entity.Mascota;
 public interface MascotaRepository extends JpaRepository<Mascota, Long> {
 
     List<Mascota> findByClienteId(Long clienteId);
+
+    @Override
+    @EntityGraph(attributePaths = "cliente")
+    Optional<Mascota> findById(Long id);
 
     @EntityGraph(attributePaths = "cliente")
     @Query("""

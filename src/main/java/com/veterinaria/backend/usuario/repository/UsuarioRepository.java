@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
 
 import com.veterinaria.backend.usuario.entity.Usuario;
+
+import jakarta.persistence.LockModeType;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
@@ -25,6 +28,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByCorreoIgnoreCaseAndIdNot(String correo, Long id);
 
     boolean existsByIdAndActivoTrue(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select usuario
+            from Usuario usuario
+            where usuario.id = :id
+            """)
+    Optional<Usuario> findByIdForUpdate(@Param("id") Long id);
 
     @Query("""
             select usuario
