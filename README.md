@@ -267,12 +267,26 @@ Permisos:
 
 - Administración y recepción crean, consultan, confirman, reprograman, cancelan y marcan no atendida.
 - Recepción no puede marcar atendida.
-- Administración y el profesional asignado compatible pueden marcar atendida.
+- Administración y el profesional asignado compatible pueden marcar atendida en peluquería. Las citas médicas se cierran únicamente al registrar atención médica.
 - Veterinarios y peluqueros solo consultan y operan citas propias compatibles. En listados y reprogramación el backend fuerza su `uid`, aunque se envíe otro `trabajadorId`.
 
 Filtros de listado: `fechaHoraInicioDesde`, `fechaHoraInicioHasta`, `estado`, `tipoCita`, `clienteId`, `mascotaId`, `trabajadorId`, `busqueda`, `page`, `size` y `sort`. Las fechas son ISO-8601. El sort acepta únicamente `id`, `fechaHoraInicio`, `fechaHoraFin`, `estado`, `tipoCita`, `createdAt` y `updatedAt`, con dirección `asc` o `desc`.
 
 La disponibilidad responde `disponibilidadBase`, `tieneCitaSolapada`, `disponible` y `motivo`. Los intervalos son semiabiertos, por lo que dos citas contiguas son válidas. Creación bloquea primero al trabajador; reprogramación bloquea cita y luego trabajador; las transiciones bloquean la cita. Este locking reduce carreras dentro de la aplicación, pero el esquema actual no tiene una restricción de exclusión PostgreSQL: ese refuerzo a nivel base de datos queda fuera del alcance actual.
+
+## Atención médica
+
+Endpoints clínicos:
+
+- `POST /api/v1/citas/{citaId}/atencion-medica`: registra una atención para una cita médica `CONFIRMADA` y cambia la cita a `ATENDIDA` en la misma transacción.
+- `GET /api/v1/citas/{citaId}/atencion-medica`: obtiene el detalle clínico.
+- `GET /api/v1/mascotas/{mascotaId}/atenciones-medicas`: historial paginado, ordenado por `fechaAtencion DESC, id DESC`, con filtros opcionales `desde` y `hasta`.
+
+El request utiliza únicamente `pesoKg`, `temperaturaC`, `sintomas`, `diagnostico`, `motivoSinDiagnostico`, `tratamiento`, `motivoSinTratamiento`, `receta`, `motivoSinReceta` y `observaciones`. Diagnóstico, tratamiento y receta requieren su valor o el motivo correspondiente. El veterinario se deriva del `uid` JWT y del trabajador asignado; no se acepta `veterinarioId`.
+
+Las atenciones son inmutables mediante API: no tienen `PUT`, `PATCH` ni `DELETE`. Veterinarios y administradores pueden leer información clínica; recepción y peluquería no pueden acceder a endpoints clínicos. Un administrador solo puede crear si además tiene rol `VETERINARIO` y está asignado a la cita.
+
+La creación bloquea la cita con `PESSIMISTIC_WRITE` y aprovecha `UNIQUE(cita_id)` para impedir duplicados concurrentes. Vacunas y vacunas aplicadas quedan fuera de esta feature; posteriormente podrán relacionarse mediante `VacunaAplicada → AtencionMedica`.
 
 ## Pruebas
 

@@ -262,10 +262,9 @@ class CitaIntegrationTest extends PostgreSqlContainerConfiguration {
 
         mockMvc.perform(patch("/api/v1/citas/{id}/atendida", citaId)
                         .header("Authorization", "Bearer " + veterinarioToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("ATENDIDA"));
+                .andExpect(status().isConflict());
 
-        assertThat(citaRepository.findById(citaId).orElseThrow().getEstado()).isEqualTo(EstadoCita.ATENDIDA);
+        assertThat(citaRepository.findById(citaId).orElseThrow().getEstado()).isEqualTo(EstadoCita.CONFIRMADA);
     }
 
     private Usuario createUser(String correo, String... roles) {

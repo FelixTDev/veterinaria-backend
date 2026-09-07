@@ -18,6 +18,8 @@ import com.veterinaria.backend.auth.exception.UsuarioInactivoException;
 import com.veterinaria.backend.cita.exception.CitaBadRequestException;
 import com.veterinaria.backend.cita.exception.CitaConflictException;
 import com.veterinaria.backend.cita.exception.CitaNoEncontradaException;
+import com.veterinaria.backend.atencionmedica.exception.AtencionMedicaConflictException;
+import com.veterinaria.backend.atencionmedica.exception.AtencionMedicaNoEncontradaException;
 import com.veterinaria.backend.usuario.exception.CorreoDuplicadoException;
 import com.veterinaria.backend.usuario.exception.OperacionAdministradorException;
 import com.veterinaria.backend.usuario.exception.RolInvalidoException;
@@ -149,6 +151,7 @@ public class GlobalExceptionHandler {
             TrabajadorNoEncontradoException.class,
             HorarioNoEncontradoException.class,
             IndisponibilidadNoEncontradaException.class
+            ,AtencionMedicaNoEncontradaException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainNotFound(
             RuntimeException exception, HttpServletRequest request) {
@@ -164,6 +167,7 @@ public class GlobalExceptionHandler {
             TrabajadorNoProgramableException.class,
             HorarioSolapadoException.class,
             IndisponibilidadSolapadaException.class
+            ,AtencionMedicaConflictException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainConflict(
             RuntimeException exception, HttpServletRequest request) {

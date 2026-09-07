@@ -1099,18 +1099,16 @@ class CitaGestionServiceTest {
     }
 
     @Test
-    void shouldMarkConfirmedAppointmentAsAtendidaForAdministrador() {
+    void shouldRejectMedicalAppointmentAsAtendidaForAdministradorWithoutClinicalAttention() {
         LocalDateTime inicio = now().minusMinutes(20);
         Cita cita = cita(710L, EstadoCita.CONFIRMADA, TipoCita.MEDICA, 20L, inicio, inicio.plusMinutes(45));
         when(citaRepository.findByIdForUpdate(710L)).thenReturn(Optional.of(cita));
-        when(citaServicioRepository.findByCitaIdIn(List.of(710L)))
-                .thenReturn(List.of(citaServicio(cita, 30L, TipoServicio.MEDICO, new BigDecimal("80.00"), 45)));
         when(usuarioRolRepository.findActivosByUsuarioId(1L)).thenReturn(roles(NombreRol.ADMINISTRADOR));
 
-        CitaDetalleResponse response = service.marcarAtendida(710L, 1L);
-
-        assertThat(response.estado()).isEqualTo(EstadoCita.ATENDIDA);
-        assertThat(cita.getEstado()).isEqualTo(EstadoCita.ATENDIDA);
+        assertThatThrownBy(() -> service.marcarAtendida(710L, 1L))
+                .isInstanceOf(CitaConflictException.class)
+                .hasMessageContaining("atencion medica");
+        assertThat(cita.getEstado()).isEqualTo(EstadoCita.CONFIRMADA);
     }
 
     @Test
@@ -1155,10 +1153,10 @@ class CitaGestionServiceTest {
 
         assertThatThrownBy(() -> service.marcarAtendida(714L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("inicio");
+                .hasMessageContaining("atencion medica");
         assertThatThrownBy(() -> service.marcarAtendida(715L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("estado");
+                .hasMessageContaining("atencion medica");
     }
 
     @Test
@@ -1166,13 +1164,11 @@ class CitaGestionServiceTest {
         LocalDateTime inicio = now().minusSeconds(1);
         Cita cita = cita(719L, EstadoCita.CONFIRMADA, TipoCita.MEDICA, 20L, inicio, inicio.plusMinutes(45));
         when(citaRepository.findByIdForUpdate(719L)).thenReturn(Optional.of(cita));
-        when(citaServicioRepository.findByCitaIdIn(List.of(719L)))
-                .thenReturn(List.of(citaServicio(cita, 30L, TipoServicio.MEDICO, new BigDecimal("80.00"), 45)));
         when(usuarioRolRepository.findActivosByUsuarioId(1L)).thenReturn(roles(NombreRol.ADMINISTRADOR));
 
-        CitaDetalleResponse response = service.marcarAtendida(719L, 1L);
-
-        assertThat(response.estado()).isEqualTo(EstadoCita.ATENDIDA);
+        assertThatThrownBy(() -> service.marcarAtendida(719L, 1L))
+                .isInstanceOf(CitaConflictException.class)
+                .hasMessageContaining("atencion medica");
     }
 
     @Test
