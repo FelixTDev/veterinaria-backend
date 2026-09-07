@@ -2,12 +2,26 @@ package com.veterinaria.backend.servicio.repository;
 
 import java.util.List;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import com.veterinaria.backend.servicio.entity.PrecioServicioTamano;
 
 public interface PrecioServicioTamanoRepository extends JpaRepository<PrecioServicioTamano, Long> {
+
+    @Override
+    @EntityGraph(attributePaths = "servicio")
+    Optional<PrecioServicioTamano> findById(Long id);
+
+    @EntityGraph(attributePaths = "servicio")
+    List<PrecioServicioTamano> findByIdIn(Collection<Long> ids);
+
+    @EntityGraph(attributePaths = "servicio")
+    default List<PrecioServicioTamano> findByIdInWithServicio(Collection<Long> ids) {
+        return findByIdIn(ids);
+    }
 
     List<PrecioServicioTamano> findByServicioNombre(String nombreServicio);
 

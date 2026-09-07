@@ -15,6 +15,9 @@ import com.veterinaria.backend.auth.exception.PasswordPolicyException;
 import com.veterinaria.backend.auth.exception.PasswordsNoCoincidenException;
 import com.veterinaria.backend.auth.exception.RecoveryTokenInvalidoException;
 import com.veterinaria.backend.auth.exception.UsuarioInactivoException;
+import com.veterinaria.backend.cita.exception.CitaBadRequestException;
+import com.veterinaria.backend.cita.exception.CitaConflictException;
+import com.veterinaria.backend.cita.exception.CitaNoEncontradaException;
 import com.veterinaria.backend.usuario.exception.CorreoDuplicadoException;
 import com.veterinaria.backend.usuario.exception.OperacionAdministradorException;
 import com.veterinaria.backend.usuario.exception.RolInvalidoException;
@@ -43,11 +46,16 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.BindException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -69,6 +77,18 @@ public class GlobalExceptionHandler {
             ConstraintViolationException exception,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            BindException.class,
+            MissingServletRequestParameterException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleRequestBinding(
+            Exception exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Los parametros de la solicitud no son validos.", request);
     }
 
     @ExceptionHandler(CredencialesInvalidasException.class)
@@ -125,6 +145,7 @@ public class GlobalExceptionHandler {
             ClienteNoEncontradoException.class,
             MascotaNoEncontradaException.class,
             ServicioNoEncontradoException.class,
+            CitaNoEncontradaException.class,
             TrabajadorNoEncontradoException.class,
             HorarioNoEncontradoException.class,
             IndisponibilidadNoEncontradaException.class
@@ -139,6 +160,7 @@ public class GlobalExceptionHandler {
             ClienteMascotaInactivoException.class,
             ServicioDuplicadoException.class,
             PrecioServicioInvalidoException.class,
+            CitaConflictException.class,
             TrabajadorNoProgramableException.class,
             HorarioSolapadoException.class,
             IndisponibilidadSolapadaException.class
@@ -153,6 +175,7 @@ public class GlobalExceptionHandler {
             PageSizeMascotaInvalidoException.class,
             RangoHorarioInvalidoException.class,
             RangoIndisponibilidadInvalidoException.class,
+            CitaBadRequestException.class,
             IllegalArgumentException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainBadRequest(
@@ -185,6 +208,13 @@ public class GlobalExceptionHandler {
             RuntimeException exception,
             HttpServletRequest request) {
         return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado.", request);
+    }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationCredentialsNotFound(
+            AuthenticationCredentialsNotFoundException exception,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Token invalido.", request);
     }
 
     @ExceptionHandler(Exception.class)
