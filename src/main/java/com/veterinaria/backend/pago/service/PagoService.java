@@ -69,6 +69,7 @@ public class PagoService {
     @Transactional(readOnly = true)
     public PaginaResponse<PagoResponse> listar(Long citaId, Integer page, Integer size, Set<NombreRol> roles) {
         validarRolConsulta(roles); validarCita(citaId);
+        if (page != null && page < 0 || size != null && (size < 1 || size > 100)) throw new IllegalArgumentException("La paginacion es invalida.");
         Page<Pago> result = pagoRepository.findAllByCitaId(citaId, PageRequest.of(page == null ? 0 : page, size == null ? 20 : Math.min(size, 100), Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"))));
         Map<Long, List<DetallePago>> details = cargarDetalles(result.getContent());
         return new PaginaResponse<>(result.getContent().stream().map(p -> toResponse(p, details.getOrDefault(p.getId(), List.of()))).toList(), result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());

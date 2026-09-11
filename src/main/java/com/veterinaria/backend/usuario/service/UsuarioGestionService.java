@@ -95,6 +95,7 @@ public class UsuarioGestionService {
             Boolean activo,
             NombreRol rol,
             Pageable pageable) {
+        validarOrden(pageable, "id", "correo", "primerNombre", "primerApellido", "activo");
         String normalizedSearch = normalizeOptionalText(search);
         Page<Usuario> usuarios = usuarioRepository.findAllForGestion(normalizedSearch, activo, rol, pageable);
         Map<Long, List<NombreRol>> rolesByUsuarioId = findRolesByUsuarioIds(
@@ -111,6 +112,13 @@ public class UsuarioGestionService {
                 usuarios.getSize(),
                 usuarios.getTotalElements(),
                 usuarios.getTotalPages());
+    }
+
+    private void validarOrden(Pageable pageable, String... allowed) {
+        java.util.Set<String> allowedSet = java.util.Set.of(allowed);
+        if (pageable.getSort().stream().anyMatch(order -> !allowedSet.contains(order.getProperty()))) {
+            throw new IllegalArgumentException("El orden solicitado no es valido.");
+        }
     }
 
     @Transactional(readOnly = true)

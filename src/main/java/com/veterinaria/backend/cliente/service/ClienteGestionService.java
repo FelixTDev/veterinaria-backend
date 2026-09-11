@@ -59,6 +59,7 @@ public class ClienteGestionService {
     public PaginaResponse<ClienteResumenResponse> listar(String search, Boolean activo, TipoDocumento tipoDocumento,
             Pageable pageable) {
         validarPagina(pageable);
+        validarOrden(pageable, "id", "primerNombre", "primerApellido", "numeroDocumento", "correo", "activo");
         Page<Cliente> page = clienteRepository.findAllForGestion(normalizarNullable(search), activo, tipoDocumento, pageable);
         List<Long> ids = page.getContent().stream().map(Cliente::getId).toList();
         Map<Long, Long> counts = new HashMap<>();
@@ -131,4 +132,5 @@ public class ClienteGestionService {
     private String normalizarNullable(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private String normalizarEmail(String value) { return normalizarNullable(value) == null ? null : value.trim().toLowerCase(java.util.Locale.ROOT); }
     private void validarPagina(Pageable pageable) { if (pageable.getPageSize() < 1 || pageable.getPageSize() > 100) throw new PageSizeClienteInvalidoException("El tamaño de pagina debe estar entre 1 y 100."); }
+    private void validarOrden(Pageable pageable, String... allowed) { var values = java.util.Set.of(allowed); if (pageable.getSort().stream().anyMatch(order -> !values.contains(order.getProperty()))) throw new IllegalArgumentException("El orden solicitado no es valido."); }
 }

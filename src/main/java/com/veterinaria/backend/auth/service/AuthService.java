@@ -56,7 +56,7 @@ public class AuthService {
             UsuarioInactivoException.class
     })
     public LoginResponse login(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(request.correo().trim())
+        Usuario usuario = usuarioRepository.findByCorreoIgnoreCaseForUpdate(request.correo().trim())
                 .orElseThrow(() -> new CredencialesInvalidasException(GENERIC_LOGIN_ERROR));
 
         validateUsuarioAutenticable(usuario);
@@ -111,7 +111,7 @@ public class AuthService {
 
     private void validateUsuarioAutenticable(Usuario usuario) {
         if (!Boolean.TRUE.equals(usuario.getActivo())) {
-            throw new UsuarioInactivoException("La cuenta no se encuentra habilitada para autenticarse.");
+            throw new CredencialesInvalidasException(GENERIC_LOGIN_ERROR);
         }
         if (usuario.getBloqueadoHasta() != null && usuario.getBloqueadoHasta().isAfter(LocalDateTime.now())) {
             throw new CuentaBloqueadaException("La cuenta se encuentra temporalmente bloqueada.");

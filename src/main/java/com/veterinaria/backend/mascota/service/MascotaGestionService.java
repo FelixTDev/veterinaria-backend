@@ -56,6 +56,7 @@ public class MascotaGestionService {
     public PaginaResponse<MascotaResumenResponse> listar(String search, Boolean activo, Long clienteId,
             EspecieMascota especie, SexoMascota sexo, Pageable pageable) {
         validarPagina(pageable);
+        validarOrden(pageable, "id", "nombre", "especie", "sexo", "activo");
         Page<Mascota> page = mascotaRepository.findAllForGestion(normalizarNullable(search), activo, clienteId, especie, sexo, pageable);
         return pagina(page);
     }
@@ -126,4 +127,5 @@ public class MascotaGestionService {
 
     private String normalizarNullable(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private void validarPagina(Pageable pageable) { if (pageable.getPageSize() < 1 || pageable.getPageSize() > 100) throw new PageSizeMascotaInvalidoException("El tamaño de pagina debe estar entre 1 y 100."); }
+    private void validarOrden(Pageable pageable, String... allowed) { var values = java.util.Set.of(allowed); if (pageable.getSort().stream().anyMatch(order -> !values.contains(order.getProperty()))) throw new IllegalArgumentException("El orden solicitado no es valido."); }
 }

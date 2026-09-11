@@ -9,6 +9,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.veterinaria.backend.auth.security.AuthJwtProperties;
 import com.veterinaria.backend.auth.security.TokenPurpose;
 import com.veterinaria.backend.auth.service.AuthMailProperties;
+import com.veterinaria.backend.usuario.repository.UsuarioRepository;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -41,11 +44,18 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
 
     @Bean
+    public ActiveUserFilter activeUserFilter(UsuarioRepository usuarioRepository) {
+        return new ActiveUserFilter(usuarioRepository);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtDecoder jwtDecoder) throws Exception {
+            JwtDecoder jwtDecoder,
+            ActiveUserFilter activeUserFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> { })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health").permitAll()
@@ -63,6 +73,8 @@ public class SecurityConfiguration {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new JsonAuthenticationEntryPoint())
                         .accessDeniedHandler(new JsonAccessDeniedHandler()));
+
+        http.addFilterAfter(activeUserFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }

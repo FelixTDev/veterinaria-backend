@@ -6,5 +6,5 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
 public record RegistrarPagoRequest(
-        @NotEmpty @Valid List<DetallePagoRequest> detalles,
+        @NotEmpty List<@Valid DetallePagoRequest> detalles,
         @Size(max = 300) String observaciones) { }

@@ -62,6 +62,7 @@ public class ServicioGestionService {
     public PaginaResponse<ServicioResumenResponse> listar(String search, Boolean activo, TipoServicio tipoServicio,
             Pageable pageable) {
         validatePage(pageable);
+        validarOrden(pageable, "id", "nombre", "tipoServicio", "precioBase", "activo");
         Page<Servicio> page = servicioRepository.findAllForGestion(normalizeNullable(search), activo, tipoServicio, pageable);
         Map<Long, Long> counts = new HashMap<>();
         List<Long> ids = page.getContent().stream().map(Servicio::getId).toList();
@@ -149,4 +150,5 @@ public class ServicioGestionService {
     private String normalize(String value) { return value.trim(); }
     private String normalizeNullable(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private void validatePage(Pageable pageable) { if (pageable.getPageSize() < 1 || pageable.getPageSize() > 100) throw new IllegalArgumentException("El tamaño de pagina debe estar entre 1 y 100."); }
+    private void validarOrden(Pageable pageable, String... allowed) { var values = java.util.Set.of(allowed); if (pageable.getSort().stream().anyMatch(order -> !values.contains(order.getProperty()))) throw new IllegalArgumentException("El orden solicitado no es valido."); }
 }

@@ -31,7 +31,7 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                {"timestamp":"%s","status":%d,"error":"%s","message":"%s","path":"%s"}
+                {"timestamp":"%s","status":%d,"error":"%s","message":"%s","path":"%s","code":"UNAUTHORIZED","fieldErrors":{}}
                 """.formatted(
                 OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                 status.value(),

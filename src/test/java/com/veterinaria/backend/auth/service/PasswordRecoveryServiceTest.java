@@ -160,7 +160,7 @@ class PasswordRecoveryServiceTest {
                 .build();
         when(jwtTokenService.decodeRecoveryToken("recovery-token")).thenReturn(jwt);
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(codigoRecuperacionRepository.findByIdAndUsuario_Id(10L, 1L)).thenReturn(Optional.of(codigo));
+        when(codigoRecuperacionRepository.findByIdAndUsuarioIdForUpdate(10L, 1L)).thenReturn(Optional.of(codigo));
 
         passwordRecoveryService.restablecerPassword(
                 new RestablecerPasswordRequest("recovery-token", "NuevoPassword1!", "NuevoPassword1!"));

@@ -69,6 +69,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -77,19 +79,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(error -> fieldErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
         String message = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(this::formatFieldError)
                 .collect(Collectors.joining("; "));
-        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message, request, fieldErrors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
             ConstraintViolationException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", exception.getMessage(), request);
     }
 
     @ExceptionHandler({
@@ -108,21 +112,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleInvalidCredentials(
             CredencialesInvalidasException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
+        return buildResponse(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", exception.getMessage(), request);
     }
 
     @ExceptionHandler(UsuarioInactivoException.class)
     public ResponseEntity<ApiErrorResponse> handleInactiveUser(
             UsuarioInactivoException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+        return buildResponse(HttpStatus.FORBIDDEN, "FORBIDDEN", exception.getMessage(), request);
     }
 
     @ExceptionHandler(CuentaBloqueadaException.class)
     public ResponseEntity<ApiErrorResponse> handleBlockedAccount(
             CuentaBloqueadaException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.LOCKED, exception.getMessage(), request);
+        return buildResponse(HttpStatus.LOCKED, "ACCOUNT_LOCKED", exception.getMessage(), request);
     }
 
     @ExceptionHandler({
@@ -137,21 +141,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleBadRequest(
             AuthException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "BUSINESS_RULE_VIOLATION", exception.getMessage(), request);
     }
 
     @ExceptionHandler(CorreoEnvioException.class)
     public ResponseEntity<ApiErrorResponse> handleMailError(
             CorreoEnvioException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request);
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", exception.getMessage(), request);
     }
 
     @ExceptionHandler(UsuarioNoEncontradoException.class)
     public ResponseEntity<ApiErrorResponse> handleUsuarioNotFound(
             UsuarioNoEncontradoException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+        return buildResponse(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", exception.getMessage(), request);
     }
 
     @ExceptionHandler({
@@ -192,7 +196,7 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ApiErrorResponse> handleDomainConflict(
             RuntimeException exception, HttpServletRequest request) {
-        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+        return buildResponse(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), request);
     }
 
     @ExceptionHandler({
@@ -206,7 +210,7 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ApiErrorResponse> handleDomainBadRequest(
             RuntimeException exception, HttpServletRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", exception.getMessage(), request);
     }
 
     @ExceptionHandler(RolInvalidoException.class)
@@ -233,37 +237,55 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleAccessDenied(
             RuntimeException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado.", request);
+        return buildResponse(HttpStatus.FORBIDDEN, "FORBIDDEN", "Acceso denegado.", request);
     }
 
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleAuthenticationCredentialsNotFound(
             AuthenticationCredentialsNotFoundException exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Token invalido.", request);
+        return buildResponse(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Token invalido.", request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(
             Exception exception,
             HttpServletRequest request) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error interno.", request);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Ocurrio un error interno.", request);
     }
 
     private String formatFieldError(FieldError fieldError) {
         return fieldError.getField() + ": " + fieldError.getDefaultMessage();
     }
 
-    private ResponseEntity<ApiErrorResponse> buildResponse(
-            HttpStatus status,
-            String message,
+    private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String message, HttpServletRequest request) {
+        return buildResponse(status, defaultCode(status), message, request, Map.of());
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String code, String message,
             HttpServletRequest request) {
+        return buildResponse(status, code, message, request, Map.of());
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String code, String message,
+            HttpServletRequest request, Map<String, String> fieldErrors) {
         ApiErrorResponse body = new ApiErrorResponse(
                 OffsetDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI());
+                request.getRequestURI(), code, fieldErrors);
         return ResponseEntity.status(status).body(body);
+    }
+
+    private String defaultCode(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "VALIDATION_ERROR";
+            case UNAUTHORIZED -> "UNAUTHORIZED";
+            case FORBIDDEN -> "FORBIDDEN";
+            case NOT_FOUND -> "RESOURCE_NOT_FOUND";
+            case CONFLICT -> "CONFLICT";
+            default -> "HTTP_ERROR";
+        };
     }
 }

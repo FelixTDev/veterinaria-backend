@@ -98,7 +98,7 @@ public class PasswordRecoveryService {
         Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RecoveryTokenInvalidoException("El recovery token es invalido o expiro."));
         CodigoRecuperacion codigoRecuperacion = codigoRecuperacionRepository
-                .findByIdAndUsuario_Id(recoveryCodeId, userId)
+                .findByIdAndUsuarioIdForUpdate(recoveryCodeId, userId)
                 .orElseThrow(() -> new RecoveryTokenInvalidoException("El recovery token es invalido o expiro."));
 
         if (Boolean.TRUE.equals(codigoRecuperacion.getUsado())) {

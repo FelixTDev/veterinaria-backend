@@ -69,7 +69,7 @@ class AuthServiceTest {
         Usuario usuario = buildUsuario("ana@test.dev", "Password1!");
         usuario.setIntentosFallidos(3);
         usuario.setBloqueadoHasta(LocalDateTime.now().minusMinutes(1));
-        when(usuarioRepository.findByCorreoIgnoreCase("ana@test.dev")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByCorreoIgnoreCaseForUpdate("ana@test.dev")).thenReturn(Optional.of(usuario));
         when(usuarioRolRepository.findActivosByUsuarioId(1L)).thenReturn(List.of(buildUsuarioRol(NombreRol.RECEPCIONISTA)));
         when(jwtTokenService.generateAccessToken(usuario, List.of("RECEPCIONISTA")))
                 .thenReturn(new JwtTokenService.TokenResult("jwt-access", 3600));
@@ -87,7 +87,7 @@ class AuthServiceTest {
     @Test
     void shouldIncreaseFailedAttemptsWhenPasswordIsIncorrect() {
         Usuario usuario = buildUsuario("ana@test.dev", "Password1!");
-        when(usuarioRepository.findByCorreoIgnoreCase("ana@test.dev")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByCorreoIgnoreCaseForUpdate("ana@test.dev")).thenReturn(Optional.of(usuario));
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("ana@test.dev", "OtroPassword1!")))
                 .isInstanceOf(CredencialesInvalidasException.class);
@@ -101,7 +101,7 @@ class AuthServiceTest {
     void shouldBlockAccountOnFifthFailedAttempt() {
         Usuario usuario = buildUsuario("ana@test.dev", "Password1!");
         usuario.setIntentosFallidos(4);
-        when(usuarioRepository.findByCorreoIgnoreCase("ana@test.dev")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByCorreoIgnoreCaseForUpdate("ana@test.dev")).thenReturn(Optional.of(usuario));
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("ana@test.dev", "OtroPassword1!")))
                 .isInstanceOf(CuentaBloqueadaException.class);
@@ -114,7 +114,7 @@ class AuthServiceTest {
     void shouldRejectBlockedUser() {
         Usuario usuario = buildUsuario("ana@test.dev", "Password1!");
         usuario.setBloqueadoHasta(LocalDateTime.now().plusMinutes(10));
-        when(usuarioRepository.findByCorreoIgnoreCase("ana@test.dev")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByCorreoIgnoreCaseForUpdate("ana@test.dev")).thenReturn(Optional.of(usuario));
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("ana@test.dev", "Password1!")))
                 .isInstanceOf(CuentaBloqueadaException.class);
@@ -124,10 +124,10 @@ class AuthServiceTest {
     void shouldRejectInactiveUser() {
         Usuario usuario = buildUsuario("ana@test.dev", "Password1!");
         usuario.setActivo(Boolean.FALSE);
-        when(usuarioRepository.findByCorreoIgnoreCase("ana@test.dev")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByCorreoIgnoreCaseForUpdate("ana@test.dev")).thenReturn(Optional.of(usuario));
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("ana@test.dev", "Password1!")))
-                .isInstanceOf(UsuarioInactivoException.class);
+                .isInstanceOf(CredencialesInvalidasException.class);
     }
 
     @Test

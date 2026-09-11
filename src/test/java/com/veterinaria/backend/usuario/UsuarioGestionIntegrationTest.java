@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.veterinaria.backend.auth.security.JwtTokenService;
 import com.veterinaria.backend.support.PostgreSqlContainerConfiguration;
 import com.veterinaria.backend.usuario.entity.Rol;
 import com.veterinaria.backend.usuario.entity.Usuario;
@@ -51,8 +50,6 @@ class UsuarioGestionIntegrationTest extends PostgreSqlContainerConfiguration {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtTokenService jwtTokenService;
 
     @BeforeEach
     void cleanUp() {
@@ -170,7 +167,7 @@ class UsuarioGestionIntegrationTest extends PostgreSqlContainerConfiguration {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson("ana.nueva@test.dev", "Password1!")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -193,7 +190,7 @@ class UsuarioGestionIntegrationTest extends PostgreSqlContainerConfiguration {
                         .content("{\"roles\":[\"RECEPCIONISTA\"]}"))
                 .andExpect(status().isConflict());
 
-        String syntheticAdminToken = jwtTokenService.generateAccessToken(syntheticUsuario(999L), java.util.List.of("ADMINISTRADOR")).tokenValue();
+        String syntheticAdminToken = tokenFor(admin);
         mockMvc.perform(patch("/api/v1/usuarios/{id}/estado", admin.getId())
                         .header("Authorization", "Bearer " + syntheticAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -245,13 +242,6 @@ class UsuarioGestionIntegrationTest extends PostgreSqlContainerConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
         return extractJsonValue(result.getResponse().getContentAsString(), "accessToken");
-    }
-
-    private Usuario syntheticUsuario(Long id) {
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setCorreo("synthetic-admin@test.dev");
-        return usuario;
     }
 
     private String crearUsuarioJson(String correo, String... roles) {

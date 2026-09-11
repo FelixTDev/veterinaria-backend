@@ -28,9 +28,14 @@ MAIL_PASSWORD=
 MAIL_FROM=
 MAIL_SMTP_AUTH=true
 MAIL_STARTTLS_ENABLE=true
+APP_CORS_ALLOWED_ORIGINS=http://localhost:4200
 ```
 
 `JWT_SECRET` es obligatoria. La aplicacion falla al arrancar si no esta configurada.
+`DB_USERNAME`, `DB_PASSWORD` y `APP_CORS_ALLOWED_ORIGINS` se externalizan; no se
+mantienen credenciales de base de datos por defecto en runtime.
+
+El contrato completo para Angular está en [`docs/api-contract.md`](docs/api-contract.md).
 
 ## Autenticacion
 

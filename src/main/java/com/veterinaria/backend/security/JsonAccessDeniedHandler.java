@@ -23,7 +23,7 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                {"timestamp":"%s","status":403,"error":"Forbidden","message":"%s","path":"%s"}
+                {"timestamp":"%s","status":403,"error":"Forbidden","message":"%s","path":"%s","code":"FORBIDDEN","fieldErrors":{}}
                 """.formatted(
                 OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                 escape("No tienes permisos para acceder a este recurso."),

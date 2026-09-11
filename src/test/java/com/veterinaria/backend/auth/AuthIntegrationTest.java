@@ -3,6 +3,7 @@ package com.veterinaria.backend.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,6 +107,48 @@ class AuthIntegrationTest extends PostgreSqlContainerConfiguration {
         mockMvc.perform(get("/api/v1/auth/me")
                         .header("Authorization", "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRejectSameAccessTokenAfterUserIsDeactivated() throws Exception {
+        Usuario usuario = createUsuarioConRoles("revocado@test.dev", "Password1!", "RECEPCIONISTA");
+        String accessToken = extractJsonValue(mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson(usuario.getCorreo(), "Password1!")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(), "accessToken");
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        usuario.setActivo(false);
+        usuarioRepository.saveAndFlush(usuario);
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldNotRevealInactiveAccountDuringLogin() throws Exception {
+        Usuario usuario = createUsuarioConRoles("inactivo@test.dev", "Password1!", "RECEPCIONISTA");
+        usuario.setActivo(false);
+        usuarioRepository.saveAndFlush(usuario);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginJson(usuario.getCorreo(), "Password1!")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Credenciales invalidas."));
+    }
+
+    @Test
+    void shouldAllowAngularCorsPreflightWithAuthorization() throws Exception {
+        mockMvc.perform(options("/api/v1/auth/me")
+                        .header("Origin", "http://localhost:4200")
+                        .header("Access-Control-Request-Method", "GET")
+                        .header("Access-Control-Request-Headers", "Authorization,Content-Type"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").doesNotExist());
     }
 
     @Test
