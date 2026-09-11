@@ -340,3 +340,20 @@ El flujo consta de tres pasos:
 1. Solicitar codigo: genera un codigo aleatorio de 6 digitos, guarda solo su hash BCrypt y envia correo.
 2. Validar codigo: verifica hash, vigencia y estado, y devuelve un `recoveryToken` firmado de corta duracion.
 3. Restablecer password: valida el `recoveryToken`, cambia la password y marca el codigo como usado dentro de una transaccion.
+
+## Reportes y Dashboard
+
+El módulo de reportes requiere `desde` y `hasta` (`LocalDateTime`) en todos sus endpoints temporales y usa el intervalo `[desde, hasta)`. No interpreta automáticamente “hoy”.
+
+Endpoints:
+
+- `GET /api/v1/dashboard/resumen` — administrador y recepción; incluye operación y resumen financiero.
+- `GET /api/v1/reportes/citas/resumen` — administrador, recepción y veterinario.
+- `GET /api/v1/reportes/citas/tendencia?granularidad=DIARIA|MENSUAL` — administrador, recepción y veterinario.
+- `GET /api/v1/reportes/servicios/mas-solicitados?limit=10` — administrador y recepción; `limit` entre 1 y 100.
+- `GET /api/v1/reportes/finanzas/resumen` — administrador y recepción.
+- `GET /api/v1/reportes/pagos/saldos-pendientes` — administrador y recepción; respuesta paginada.
+- `GET /api/v1/reportes/comprobantes/resumen` — administrador y recepción.
+- `GET /api/v1/reportes/vacunas/resumen` — administrador y veterinario.
+
+Los ingresos son la suma de pagos `PAGADO` por `fechaPago`; la distribución por medio suma detalles de esos mismos pagos. El saldo se calcula por cada cita `ATENDIDA` como servicios históricos menos pagos `PAGADO`, antes de agregarlo globalmente. Las agregaciones se ejecutan en PostgreSQL mediante projections, `DATE_TRUNC` y CTE cuando corresponde. No se exponen diagnósticos, tratamientos, recetas, fotografías, URLs de Cloudinary ni referencias de pago.
