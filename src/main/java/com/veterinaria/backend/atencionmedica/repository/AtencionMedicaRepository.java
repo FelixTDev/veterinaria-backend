@@ -12,6 +12,9 @@ import org.springframework.data.repository.query.Param;
 import com.veterinaria.backend.atencionmedica.entity.AtencionMedica;
 
 public interface AtencionMedicaRepository extends JpaRepository<AtencionMedica, Long> {
+ @EntityGraph(attributePaths={"cita","cita.mascota","veterinario"})
+ @Query("select atencion from AtencionMedica atencion where atencion.id = :id")
+ Optional<AtencionMedica> findByIdForVacunacion(@Param("id") Long id);
 
     @EntityGraph(attributePaths = { "cita", "cita.mascota", "veterinario" })
     Optional<AtencionMedica> findByCitaId(Long citaId);

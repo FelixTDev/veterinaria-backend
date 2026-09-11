@@ -286,7 +286,15 @@ El request utiliza únicamente `pesoKg`, `temperaturaC`, `sintomas`, `diagnostic
 
 Las atenciones son inmutables mediante API: no tienen `PUT`, `PATCH` ni `DELETE`. Veterinarios y administradores pueden leer información clínica; recepción y peluquería no pueden acceder a endpoints clínicos. Un administrador solo puede crear si además tiene rol `VETERINARIO` y está asignado a la cita.
 
-La creación bloquea la cita con `PESSIMISTIC_WRITE` y aprovecha `UNIQUE(cita_id)` para impedir duplicados concurrentes. Vacunas y vacunas aplicadas quedan fuera de esta feature; posteriormente podrán relacionarse mediante `VacunaAplicada → AtencionMedica`.
+La creación bloquea la cita con `PESSIMISTIC_WRITE` y aprovecha `UNIQUE(cita_id)` para impedir duplicados concurrentes.
+
+## Vacunas y vacunas aplicadas
+
+Catálogo: `POST /api/v1/vacunas`, `GET /api/v1/vacunas`, `GET /api/v1/vacunas/{id}`, `PUT /api/v1/vacunas/{id}` y `PATCH /api/v1/vacunas/{id}/estado`. Escribir requiere `ADMINISTRADOR`; leer requiere `ADMINISTRADOR` o `VETERINARIO`. No existe DELETE.
+
+Aplicaciones: `POST /api/v1/atenciones-medicas/{atencionId}/vacunas` y `GET /api/v1/atenciones-medicas/{atencionId}/vacunas`. El historial paginado está en `GET /api/v1/mascotas/{mascotaId}/vacunas-aplicadas`, con filtros `desde`, `hasta` y `vacunaId`. Solo administrador y veterinario pueden consultar endpoints clínicos.
+
+`fechaAplicacion` se deriva de la atención médica. `VacunaAplicada` es inmutable mediante API. La unicidad case-insensitive del catálogo se valida en aplicación, pero el UNIQUE PostgreSQL existente es case-sensitive y conserva una carrera residual entre escrituras concurrentes con distinta capitalización.
 
 ## Pruebas
 
