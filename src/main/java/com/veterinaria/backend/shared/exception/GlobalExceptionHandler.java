@@ -24,6 +24,13 @@ import com.veterinaria.backend.vacuna.exception.VacunaDuplicadaException;
 import com.veterinaria.backend.vacuna.exception.VacunaInactivaException;
 import com.veterinaria.backend.vacuna.exception.VacunaNoEncontradaException;
 import com.veterinaria.backend.vacuna.exception.VacunacionNoPermitidaException;
+import com.veterinaria.backend.peluqueria.exception.AtencionPeluqueriaNoEncontradaException;
+import com.veterinaria.backend.peluqueria.exception.EvidenciaInvalidaException;
+import com.veterinaria.backend.peluqueria.exception.PeluqueriaConflictException;
+import com.veterinaria.backend.pago.exception.PagoConflictException;
+import com.veterinaria.backend.pago.exception.PagoNoEncontradoException;
+import com.veterinaria.backend.comprobante.exception.ComprobanteConflictException;
+import com.veterinaria.backend.comprobante.exception.ComprobanteNoEncontradoException;
 import com.veterinaria.backend.usuario.exception.CorreoDuplicadoException;
 import com.veterinaria.backend.usuario.exception.OperacionAdministradorException;
 import com.veterinaria.backend.usuario.exception.RolInvalidoException;
@@ -157,6 +164,9 @@ public class GlobalExceptionHandler {
             IndisponibilidadNoEncontradaException.class
             ,AtencionMedicaNoEncontradaException.class,
             VacunaNoEncontradaException.class
+            ,AtencionPeluqueriaNoEncontradaException.class,
+            PagoNoEncontradoException.class,
+            ComprobanteNoEncontradoException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainNotFound(
             RuntimeException exception, HttpServletRequest request) {
@@ -176,6 +186,9 @@ public class GlobalExceptionHandler {
             VacunaDuplicadaException.class,
             VacunaInactivaException.class,
             VacunacionNoPermitidaException.class
+            ,PeluqueriaConflictException.class,
+            PagoConflictException.class,
+            ComprobanteConflictException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainConflict(
             RuntimeException exception, HttpServletRequest request) {
@@ -188,7 +201,8 @@ public class GlobalExceptionHandler {
             RangoHorarioInvalidoException.class,
             RangoIndisponibilidadInvalidoException.class,
             CitaBadRequestException.class,
-            IllegalArgumentException.class
+            IllegalArgumentException.class,
+            EvidenciaInvalidaException.class
     })
     public ResponseEntity<ApiErrorResponse> handleDomainBadRequest(
             RuntimeException exception, HttpServletRequest request) {

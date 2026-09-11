@@ -296,6 +296,22 @@ Aplicaciones: `POST /api/v1/atenciones-medicas/{atencionId}/vacunas` y `GET /api
 
 `fechaAplicacion` se deriva de la atención médica. `VacunaAplicada` es inmutable mediante API. La unicidad case-insensitive del catálogo se valida en aplicación, pero el UNIQUE PostgreSQL existente es case-sensitive y conserva una carrera residual entre escrituras concurrentes con distinta capitalización.
 
+## Atención de peluquería y evidencias
+
+La atención de peluquería se crea para una cita `PELUQUERIA` en estado `CONFIRMADA` mediante `POST /api/v1/citas/{citaId}/atencion-peluqueria`. El peluquero se deriva de `trabajadorAsignado` y el `uid` del JWT debe coincidir con él.
+
+Las evidencias se cargan como `multipart/form-data` en `POST /api/v1/atenciones-peluqueria/{id}/evidencias`, con `archivo` y `tipoFoto` (`ANTES`, `DESPUES` o `FINAL`). Se permiten múltiples fotografías, incluso del mismo tipo. Se acepta JPEG, PNG y WebP hasta 5 MB; no se acepta URL suministrada por el cliente.
+
+El cierre se realiza mediante `PATCH /api/v1/atenciones-peluqueria/{id}/cerrar` y exige al menos una evidencia persistida. La cita pasa a `ATENDIDA` en la misma transacción. El endpoint genérico `PATCH /api/v1/citas/{id}/atendida` rechaza los flujos médico y de peluquería.
+
+Cloudinary se integra detrás de `ImageStorageService`; las credenciales se configuran exclusivamente mediante `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`. PostgreSQL conserva la URL segura y `storage_key`; la compensación de assets se intenta si falla la persistencia. Las pruebas nunca contactan Cloudinary real.
+
+## Pagos y comprobantes
+
+Pagos se registran en `POST /api/v1/citas/{citaId}/pagos` únicamente para citas `ATENDIDA`; admite pagos parciales y mixtos mediante detalles `EFECTIVO`, `YAPE`, `PLIN` o `TARJETA`. El backend calcula el total desde los detalles y el saldo desde la suma de los snapshots `cita_servicios.precio_aplicado`, bloqueando la cita durante el cobro. Administradores y recepcionistas pueden registrar y consultar; pagos no tienen PUT, PATCH ni DELETE.
+
+Los comprobantes se emiten en `POST /api/v1/pagos/{pagoId}/comprobante` únicamente para pagos `PAGADO`, con estado `EMITIDO`. La serie y el número son manuales en esta versión interna y se protegen con las restricciones existentes; no representa numeración SUNAT. Facturas requieren RUC de 11 dígitos, razón social y dirección fiscal. No se implementan PDF, SUNAT ni anulación. La lectura usa `GET /api/v1/citas/{citaId}/pagos`, `GET /api/v1/pagos/{id}`, `GET /api/v1/pagos/{pagoId}/comprobante` y `GET /api/v1/comprobantes/{id}`.
+
 ## Pruebas
 
 ```powershell

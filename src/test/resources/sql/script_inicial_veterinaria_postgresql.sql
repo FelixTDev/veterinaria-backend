@@ -458,6 +458,7 @@ CREATE TABLE fotos_peluqueria (
     tipo_foto               VARCHAR(15) NOT NULL,
     url_archivo             VARCHAR(500) NOT NULL,
     nombre_archivo          VARCHAR(255),
+    storage_key             VARCHAR(500),
     created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_foto_peluqueria

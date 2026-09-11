@@ -313,13 +313,7 @@ public class CitaGestionService {
     public CitaDetalleResponse marcarAtendida(Long citaId, Long actorId, Set<NombreRol> roles) {
         Cita cita = obtenerCitaParaActualizar(citaId);
         validarActorPuedeMarcarAtendida(cita, actorId, normalizarRoles(roles));
-        if (cita.getTipoCita() == TipoCita.MEDICA) {
-            throw new CitaConflictException("Las citas medicas deben cerrarse registrando la atencion medica.");
-        }
-        validarTransicion(cita.getEstado(), Set.of(EstadoCita.CONFIRMADA));
-        validarInicioAlcanzado(cita.getFechaHoraInicio(), "La cita solo puede marcarse como atendida cuando el inicio ya ocurrio.");
-        cita.setEstado(EstadoCita.ATENDIDA);
-        return citaMapper.toDetalle(cita, cargarServiciosCita(cita.getId()));
+        throw new CitaConflictException("Las citas deben cerrarse mediante su flujo especifico.");
     }
 
     @Transactional(readOnly = true)

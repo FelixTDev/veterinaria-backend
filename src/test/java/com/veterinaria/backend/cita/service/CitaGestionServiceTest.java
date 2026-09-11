@@ -1107,22 +1107,21 @@ class CitaGestionServiceTest {
 
         assertThatThrownBy(() -> service.marcarAtendida(710L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("atencion medica");
+                .hasMessageContaining("flujo especifico");
         assertThat(cita.getEstado()).isEqualTo(EstadoCita.CONFIRMADA);
     }
 
     @Test
-    void shouldMarkConfirmedAppointmentAsAtendidaForAssignedCompatibleProfessional() {
+    void shouldRejectConfirmedHairdressingAppointmentFromGenericAtendidaFlow() {
         LocalDateTime inicio = now().minusMinutes(15);
         Cita cita = cita(711L, EstadoCita.CONFIRMADA, TipoCita.PELUQUERIA, 21L, inicio, inicio.plusMinutes(35));
         when(citaRepository.findByIdForUpdate(711L)).thenReturn(Optional.of(cita));
-        when(citaServicioRepository.findByCitaIdIn(List.of(711L)))
-                .thenReturn(List.of(citaServicio(cita, 31L, TipoServicio.PELUQUERIA, new BigDecimal("65.50"), 35)));
         when(usuarioRolRepository.findActivosByUsuarioId(21L)).thenReturn(roles(NombreRol.PELUQUERO));
 
-        CitaDetalleResponse response = service.marcarAtendida(711L, 21L);
-
-        assertThat(response.estado()).isEqualTo(EstadoCita.ATENDIDA);
+        assertThatThrownBy(() -> service.marcarAtendida(711L, 21L))
+                .isInstanceOf(CitaConflictException.class)
+                .hasMessageContaining("flujo especifico");
+        assertThat(cita.getEstado()).isEqualTo(EstadoCita.CONFIRMADA);
     }
 
     @Test
@@ -1153,10 +1152,10 @@ class CitaGestionServiceTest {
 
         assertThatThrownBy(() -> service.marcarAtendida(714L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("atencion medica");
+                .hasMessageContaining("flujo especifico");
         assertThatThrownBy(() -> service.marcarAtendida(715L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("atencion medica");
+                .hasMessageContaining("flujo especifico");
     }
 
     @Test
@@ -1168,7 +1167,7 @@ class CitaGestionServiceTest {
 
         assertThatThrownBy(() -> service.marcarAtendida(719L, 1L))
                 .isInstanceOf(CitaConflictException.class)
-                .hasMessageContaining("atencion medica");
+                .hasMessageContaining("flujo especifico");
     }
 
     @Test

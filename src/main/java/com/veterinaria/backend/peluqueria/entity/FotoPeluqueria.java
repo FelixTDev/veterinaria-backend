@@ -33,6 +33,9 @@ public class FotoPeluqueria extends BaseCreatableEntity {
     @Column(name = "url_archivo", nullable = false, length = 500)
     private String urlArchivo;
 
+    @Column(name = "storage_key", length = 500)
+    private String storageKey;
+
     @Column(name = "nombre_archivo", length = 255)
     private String nombreArchivo;
 }
